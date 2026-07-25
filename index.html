@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+  <title>iOS 66.6.6 系统升级</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+      font-family: -apple-system, 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.3s ease, opacity 0.2s ease;
+    }
+    /* 仿iOS主屏幕 - 蓝色背景 */
+    .ios-home {
+      background: linear-gradient(135deg, #1e3b5c 0%, #0f2027 50%, #1a2f3f 100%);
+      background-size: cover;
+      color: white;
+      position: relative;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 40px;
+      justify-items: center;
+    }
+    .app-icon {
+      width: 65px;
+      height: 65px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    .app-icon:active {
+      transform: scale(0.95);
+    }
+    .app-label {
+      font-size: 11px;
+      margin-top: 6px;
+      text-align: center;
+      color: white;
+      text-shadow: 0 1px 3px black;
+    }
+    .status-bar {
+      width: 100%;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      background: rgba(0,0,0,0.2);
+    }
+    /* 弹窗 */
+    .alert-overlay {
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .alert-box {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      width: 300px;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      color: #111;
+    }
+    .alert-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .alert-message {
+      font-size: 15px;
+      margin-bottom: 24px;
+      color: #333;
+    }
+    .btn-upgrade {
+      background: #007AFF;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-upgrade:active { background: #005bb5; }
+    .btn-cancel {
+      background: transparent;
+      color: #007AFF;
+      border: none;
+      width: 100%;
+      padding: 12px;
+      font-size: 17px;
+      font-weight: 500;
+      background: rgba(200,200,200,0.3);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    /* 升级界面 - 正常白色 */
+    .normal-upgrade {
+      background: #ffffff;
+      color: #1d1d1f;
+    }
+    .normal-progress {
+      background: #e0e0e0;
+    }
+    .normal-fill {
+      background: #007AFF;
+      box-shadow: 0 0 8px rgba(0,122,255,0.5);
+    }
+    /* 猩红恐怖界面 */
+    .crimson-bg {
+      background: #4a0b0b;
+      background-image: radial-gradient(circle at 20% 30%, #8b1a1a, #2c0000);
+      color: #fdd;
+    }
+    .glitch-text {
+      font-weight: 900;
+      text-shadow: 0 0 6px red, 0 0 12px darkred;
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.9; text-shadow: 0 0 8px red; }
+      100% { opacity: 1; text-shadow: 0 0 20px crimson, 0 0 30px darkred; }
+    }
+    .progress-bar {
+      width: 80%;
+      height: 14px;
+      border-radius: 10px;
+      margin: 20px auto;
+      overflow: hidden;
+      transition: background 0.5s ease;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.1s linear, background 0.5s ease, box-shadow 0.5s ease;
+    }
+    .horror-app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 30px;
+    }
+    .horror-icon {
+      background: rgba(20,0,0,0.7);
+      backdrop-filter: blur(5px);
+      border: 1px solid #5a0000;
+      color: #c44;
+      transition: 0.1s;
+    }
+    .horror-icon:active { background: #5a0000; }
+    .hidden {
+      display: none !important;
+    }
+    .creepy-bg {
+      background: #1f0000;
+      animation: creepyShift 0.4s infinite;
+    }
+    @keyframes creepyShift {
+      0% { background-color: #2f0404; }
+      25% { background-color: #3a0101; }
+      50% { background-color: #240000; }
+      75% { background-color: #410303; }
+      100% { background-color: #2a0000; }
+    }
+    .fake-video {
+      width: 100%;
+      background: black;
+      color: #f88;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid red;
+    }
+    .video-player {
+      width: 100%;
+      background: #000;
+      padding: 15px;
+      border: 2px solid #b00;
+      margin: 10px 0;
+      position: relative;
+    }
+    .emoji-animation {
+      font-size: 50px;
+      animation: float 1.5s infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+    button {
+      cursor: pointer;
+      border: none;
+    }
+    .scary-face {
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+      z-index: 300;
+      animation: shake 0.2s infinite;
+    }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px); }
+      25% { transform: translate(-2px, 0px); }
+      50% { transform: translate(2px, -1px); }
+      75% { transform: translate(-1px, 2px); }
+      100% { transform: translate(0px, -1px); }
+    }
+    canvas#bgCanvas {
+      position: fixed;
+      top:0; left:0;
+      width:100%;
+      height:100%;
+      z-index: -1;
+      opacity: 0.75;
+    }
+    .disabled-app {
+      opacity: 0.4;
+      filter: grayscale(0.8);
+      pointer-events: none;
+    }
+    .welcome-hell {
+      font-size: 40px;
+      font-weight: 900;
+      color: #ff1a1a;
+      text-shadow: 0 0 30px red, 0 0 60px darkred;
+      animation: pulse 0.5s infinite;
+    }
+    /* 过渡动画 */
+    .transition-to-crimson {
+      animation: bgTransition 0.8s ease-in-out forwards;
+    }
+    @keyframes bgTransition {
+      0% { background: #ffffff; }
+      50% { background: #8b0000; }
+      100% { background: #2c0000; background-image: radial-gradient(circle at 20% 30%, #8b1a1a, #2c0000); }
+    }
+    .text-glitch {
+      animation: textFlicker 0.3s infinite;
+    }
+    @keyframes textFlicker {
+      0% { opacity: 1; transform: translate(0); }
+      25% { opacity: 0.8; transform: translate(-2px, 1px); }
+      50% { opacity: 1; transform: translate(2px, -1px); }
+      75% { opacity: 0.9; transform: translate(-1px, -1px); }
+      100% { opacity: 1; transform: translate(0); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas" style="display:none;"></canvas>
+  <div id="app"></div>
+  <script>
+    // ==================== 高级音频引擎 ====================
+    class HorrorAudio {
+      constructor() {
+        this.ctx = null;
+      }
+      getContext() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return this.ctx;
+      }
+      playTone(freq, type='sawtooth', duration=0.3, vol=0.1, delay=0) {
+        try {
+          const ctx = this.getContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(vol, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + duration);
+        } catch(e) {}
+      }
+      horrorSting() {
+        this.playTone(120, 'sawtooth', 0.6, 0.3);
+        setTimeout(()=> this.playTone(80, 'square', 0.8, 0.35), 150);
+        setTimeout(()=> this.playTone(40, 'triangle', 1.0, 0.25), 300);
+      }
+      intenseHorror() {
+        for(let i=0;i<8;i++) {
+          this.playTone(50+i*20, 'square', 0.15, 0.1, i*0.07);
+        }
+      }
+      glitchSound() {
+        for(let i=0;i<6;i++) {
+          this.playTone(30+Math.random()*220, 'square', 0.07, 0.07, i*0.05);
+        }
+      }
+      jumpScareSound() {
+        this.playTone(45, 'square', 1.0, 0.7);
+        this.playTone(28, 'sawtooth', 1.4, 0.6, 0.15);
+        this.playTone(65, 'triangle', 0.5, 0.5, 0.3);
+      }
+      ambientDrone() {
+        this.playTone(22, 'sine', 4, 0.1);
+      }
+      cancelDenySound() {
+        this.playTone(90, 'square', 0.25, 0.2);
+        this.playTone(45, 'sawtooth', 0.5, 0.3, 0.2);
+      }
+      transitionSound() {
+        this.playTone(60, 'sawtooth', 0.4, 0.15);
+        setTimeout(()=> this.playTone(40, 'square', 0.6, 0.2, 0.2), 200);
+        setTimeout(()=> this.playTone(30, 'triangle', 0.8, 0.25, 0.4), 400);
+      }
+    }
+    const audio = new HorrorAudio();
+
+    // ==================== Canvas 动态恐怖背景 ====================
+    function startCreepyCanvas() {
+      const canvas = document.getElementById('bgCanvas');
+      canvas.style.display = 'block';
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      function draw() {
+        if (canvas.style.display === 'none') return;
+        ctx.fillStyle = `rgba(${10+Math.random()*20}, 0, 0, 0.2)`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for(let i=0;i<20;i++) {
+          ctx.fillStyle = `rgba(90,0,0,${Math.random()*0.4})`;
+          ctx.beginPath();
+          ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*50+5, 0, Math.PI*2);
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+    function stopCreepyCanvas() {
+      document.getElementById('bgCanvas').style.display = 'none';
+    }
+
+    // ==================== 应用状态管理 ====================
+    let appUsage = {
+      files: false,
+      browser: false,
+      settings: false
+    };
+
+    function resetAppUsage() {
+      appUsage = { files: false, browser: false, settings: false };
+    }
+
+    // ==================== 界面渲染 ====================
+    function renderHome() {
+      stopCreepyCanvas();
+      resetAppUsage();
+      document.getElementById('app').innerHTML = `
+        <div class="screen ios-home" id="homeScreen">
+          <div class="status-bar"><span>9:41</span><span>📶 🔋 91%</span></div>
+          <div style="font-size:28px; font-weight:300; margin-top:60px;">iOS 66</div>
+          <div class="app-grid">
+            ${['📁','📷','📅','📌','🗂️','🎵','⚙️','📊','📝','⏰','🌐','📞'].map(icon => 
+              `<div><div class="app-icon">${icon}</div><div class="app-label">App</div></div>`).join('')}
+          </div>
+          <div style="margin-top:40px; color:white; opacity:0.8;">iPhone 15 Pro</div>
+        </div>
+        <div id="updateAlertContainer"></div>
+      `;
+
+      // 10秒后显示升级弹窗（白色背景）
+      setTimeout(() => {
+        const container = document.getElementById('updateAlertContainer');
+        if (container) {
+          container.innerHTML = `
+            <div class="alert-overlay" style="background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);">
+              <div class="alert-box" style="background: white; border: 1px solid #e0e0e0;">
+                <div class="alert-title" style="color: #1d1d1f;">⚡ iOS 66.6.6</div>
+                <div class="alert-message" style="color: #555;">必须立即更新至最新系统。<br>取消可能导致设备不稳定。</div>
+                <button class="btn-upgrade" id="upgradeBtn" style="background: #007AFF; color: white;">立即升级</button>
+                <button class="btn-cancel" id="cancelBtn" style="color: #007AFF; background: rgba(0,122,255,0.08);">取消</button>
+              </div>
+            </div>
+          `;
+          
+          document.getElementById('cancelBtn').addEventListener('click', cancelToCrimson);
+          document.getElementById('upgradeBtn').addEventListener('click', startUpgrade);
+          
+          // 微弱的提示音
+          audio.playTone(880, 'sine', 0.2, 0.1);
+        }
+      }, 10000);
+    }
+
+    function cancelToCrimson() {
+      audio.horrorSting();
+      document.getElementById('app').innerHTML = `
+        <div class="screen crimson-bg" style="justify-content:center; padding:20px;">
+          <h1 class="glitch-text" style="font-size:32px;">⚠️ 无法退出</h1>
+          <p style="color:#f88; margin:20px; text-align:center; font-size:18px;">你已经被锁定。<br>只有升级才能继续。</p>
+          <p style="color:#a00; margin:10px;">"无法退出" "没有回头路" "你属于这里"</p>
+          <button class="btn-upgrade" id="forceUpgrade" style="background:#8b0000; margin-top:30px; box-shadow:0 0 20px red;">⚡ 升级 iOS 66.6.6</button>
+        </div>
+      `;
+      document.getElementById('forceUpgrade').addEventListener('click', startUpgrade);
+    }
+
+    function startUpgrade() {
+      audio.glitchSound();
+      // 初始正常白色升级界面
+      document.getElementById('app').innerHTML = `
+        <div class="screen normal-upgrade" id="upgradeScreen" style="justify-content:center;">
+          <h2 id="upgradeTitle" style="color:#1d1d1f;">正在升级 iOS 66.6.6</h2>
+          <div class="progress-bar normal-progress" id="progressBar">
+            <div id="progressFill" class="progress-fill normal-fill" style="width:0%"></div>
+          </div>
+          <p id="percentText" style="color:#1d1d1f; font-weight:bold;">0%</p>
+          <p id="statusText" style="color:#666; margin-top:20px;">正在验证更新...</p>
+        </div>
+      `;
+      
+      let progress = 0;
+      let hasTransitioned = false;
+      const fill = document.getElementById('progressFill');
+      const text = document.getElementById('percentText');
+      const statusText = document.getElementById('statusText');
+      const title = document.getElementById('upgradeTitle');
+      const progressBar = document.getElementById('progressBar');
+      const screen = document.getElementById('upgradeScreen');
+      
+      const interval = setInterval(() => {
+        progress += Math.random() * 3 + 1.5;
+        
+        // 在66%时触发过渡效果
+        if (progress >= 66 && !hasTransitioned) {
+          hasTransitioned = true;
+          audio.transitionSound();
+          
+          // 添加过渡动画类
+          screen.classList.add('transition-to-crimson');
+          title.classList.add('text-glitch');
+          
+          // 改变文字内容
+          title.innerHTML = '⚠️ 系统异常';
+          title.style.color = '#f44';
+          title.style.textShadow = '0 0 10px red';
+          statusText.innerHTML = '检测到恶意软件...';
+          statusText.style.color = '#f88';
+          text.style.color = '#faa';
+          
+          // 改变进度条样式
+          progressBar.className = 'progress-bar';
+          progressBar.style.background = '#222';
+          fill.className = 'progress-fill';
+          fill.style.background = '#ff1a1a';
+          fill.style.boxShadow = '0 0 20px red';
+          
+          // 播放强烈音效
+          setTimeout(() => {
+            audio.intenseHorror();
+          }, 400);
+          
+          // 添加屏幕震动效果
+          screen.style.animation = 'shake 0.1s infinite';
+        }
+        
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          fill.style.width = '100%';
+          text.innerText = '100%';
+          statusText.innerHTML = '升级完成...';
+          screen.style.animation = 'none';
+          setTimeout(showWelcomeHell, 1000);
+        } else {
+          fill.style.width = progress + '%';
+          text.innerText = Math.floor(progress) + '%';
+        }
+      }, 100);
+    }
+
+    function showWelcomeHell() {
+      audio.horrorSting();
+      document.getElementById('app').innerHTML = `
+        <div class="screen crimson-bg" style="justify-content:center; text-align:center;">
+          <div class="welcome-hell">👹 欢迎来到地狱 👹</div>
+          <p style="color:#f88; margin-top:20px; font-size:20px;">iOS 66.6.6 已安装</p>
+          <div style="font-size:60px; margin:20px 0;">
+            <span class="emoji-animation">💀</span>
+            <span class="emoji-animation" style="animation-delay:0.3s;">🔥</span>
+            <span class="emoji-animation" style="animation-delay:0.6s;">👁️</span>
+          </div>
+          <button id="enterHorror" style="background:#b00; color:white; padding:16px 40px; font-size:22px; border-radius:14px; margin-top:30px; box-shadow:0 0 30px red;">进入系统</button>
+        </div>
+      `;
+      document.getElementById('enterHorror').addEventListener('click', showHorrorSystem);
+    }
+
+    function showHorrorSystem() {
+      startCreepyCanvas();
+      audio.ambientDrone();
+      document.getElementById('app').innerHTML = `
+        <div class="screen" id="horrorMain" style="justify-content:flex-start; padding-top:50px; background:transparent;">
+          <div style="color:#f44; font-size:26px; text-shadow:0 0 15px red; z-index:10;">iOS 66.6.6</div>
+          <div class="horror-app-grid" id="horrorApps" style="z-index:10;">
+            ${renderHorrorIcons()}
+          </div>
+          <p style="color:#a00; margin-top:30px; z-index:10;">⚠️ 系统极不稳定</p>
+        </div>
+      `;
+      bindHorrorApps();
+    }
+
+    function renderHorrorIcons() {
+      const apps = [
+        {icon:'📁', name:'文件', action:'files', used: appUsage.files},
+        {icon:'🌐', name:'浏览器', action:'browser', used: appUsage.browser},
+        {icon:'⚙️', name:'设置', action:'settings', used: appUsage.settings},
+        {icon:'💀', name:'死亡', action:null, used:false},
+        {icon:'🩸', name:'血', action:null, used:false},
+        {icon:'👁️', name:'注视', action:null, used:false},
+        {icon:'🕳️', name:'深渊', action:null, used:false},
+        {icon:'🪓', name:'斩', action:null, used:false},
+        {icon:'📵', name:'无信号', action:null, used:false},
+        {icon:'🧟', name:'死者', action:null, used:false},
+        {icon:'🔪', name:'刃', action:null, used:false},
+        {icon:'☠️', name:'毒', action:null, used:false}
+      ];
+      return apps.map(a => {
+        let classes = '';
+        if(a.action && a.used) classes = 'disabled-app';
+        if(a.action) classes += ' usable-app';
+        return `<div class="${classes}" data-action="${a.action || ''}" style="text-align:center;">
+          <div class="app-icon horror-icon">${a.icon}</div>
+          <div class="app-label" style="color:#c44;">${a.name}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function bindHorrorApps() {
+      document.querySelectorAll('.usable-app').forEach(el => {
+        el.addEventListener('click', (e) => {
+          const action = el.dataset.action;
+          if(el.classList.contains('disabled-app')) return;
+          if(action === 'files' && !appUsage.files) {
+            appUsage.files = true;
+            openFiles();
+          } else if(action === 'browser' && !appUsage.browser) {
+            appUsage.browser = true;
+            openBrowser();
+          } else if(action === 'settings' && !appUsage.settings) {
+            appUsage.settings = true;
+            openSettings();
+          }
+        });
+      });
+    }
+
+    function openFiles() {
+      audio.glitchSound();
+      document.getElementById('app').innerHTML = `
+        <div class="screen" style="background:#110000; color:#faa; padding:20px; z-index:10;">
+          <h2 style="color:red;">📁 文件</h2>
+          <div class="fake-video" style="margin-top:30px;">
+            <p>📹 设备最后影像.mp4</p>
+            <div class="video-player" id="videoPlayer">
+              <div style="display:flex; align-items:center; justify-content:center; gap:15px; flex-wrap:wrap;">
+                <span class="emoji-animation">📱</span>
+                <span class="emoji-animation" style="animation-delay:0.3s;">💥</span>
+                <span class="emoji-animation" style="animation-delay:0.6s;">🔥</span>
+              </div>
+              <p style="color:#f44; margin-top:15px;">⚠️ 正在播放：屏幕碎裂，冒烟...</p>
+            </div>
+            <button id="playVideoBtn" style="background:#b00; color:white; padding:12px; border:none; border-radius:8px; width:100%; margin-top:10px;">▶ 播放视频</button>
+          </div>
+          <button id="backFromFiles" style="margin-top:25px; background:#333; color:white; border:none; padding:12px; width:100%;">返回主屏幕</button>
+        </div>
+      `;
+      document.getElementById('playVideoBtn').addEventListener('click', ()=>{
+        const player = document.getElementById('videoPlayer');
+        player.innerHTML = `
+          <div style="font-size:60px; animation: float 0.5s infinite;">📱💥🔥</div>
+          <p style="color:#f44; margin-top:10px;">视频内容：手机屏幕出现裂痕，冒烟，最后黑屏尖叫...</p>
+          <p style="color:#f88;">😱 上一个用户尝试逃离，设备永久损坏。</p>
+        `;
+        audio.playTone(50, 'sawtooth', 2.0, 0.5);
+      });
+      document.getElementById('backFromFiles').addEventListener('click', showHorrorSystem);
+    }
+
+    function openBrowser() {
+      audio.horrorSting();
+      document.getElementById('app').innerHTML = `
+        <div class="screen" style="background:#000; color:#f66; padding:10px; z-index:10;">
+          <div style="display:flex; justify-content:space-between; width:100%; padding:5px;">
+            <span>🌐 深渊浏览器</span>
+            <button id="closeBrowser" style="background:red; color:white; border:none; padding:5px 15px;">X</button>
+          </div>
+          <div id="browserContent" style="margin-top:20px; height:75%; overflow-y:auto; background:#111; padding:10px; border:1px solid #400;">
+            <p style="color:#f44;">⚠️ 正在加载页面...</p>
+          </div>
+        </div>
+      `;
+      const sites = ['你无法逃脱.com', '死亡倒计时.net', '深渊凝视.org', '666.hell', '诅咒页面'];
+      let popupCount = 0;
+      const contentDiv = document.getElementById('browserContent');
+      function addPopup() {
+        if(popupCount > 7) {
+          showJumpscare('👹', '恐怖怪物突脸！');
+          setTimeout(()=> showHorrorSystem(), 2000);
+          return;
+        }
+        const site = sites[popupCount % sites.length];
+        contentDiv.innerHTML += `<p style="color:#f44; border:1px solid red; padding:8px; margin:5px; background:#1a0000;">🔴 ${site} - 警告：你无法离开</p>`;
+        popupCount++;
+        audio.playTone(100+popupCount*20, 'square', 0.12, 0.06);
+        setTimeout(addPopup, 350);
+      }
+      addPopup();
+      document.getElementById('closeBrowser').addEventListener('click', ()=>{
+        showJumpscare('👹', '无法关闭！');
+        setTimeout(()=> showHorrorSystem(), 1800);
+      });
+    }
+
+    function openSettings() {
+      document.getElementById('app').innerHTML = `
+        <div class="screen reset-screen" style="padding:20px; z-index:10; justify-content:center;">
+          <h2 style="color:#f44;">⚙️ 设置</h2>
+          <div style="margin-top:50px; text-align:center;">
+            <button id="resetBtn" style="background:#b00; color:white; padding:18px 35px; border:none; font-size:20px; border-radius:14px; box-shadow:0 0 25px red;">恢复出厂设置</button>
+            <p style="color:#a00; margin-top:25px;">⚠️ 唯一可用的选项</p>
+          </div>
+          <button id="cancelReset" style="margin-top:30px; background:#333; color:white; border:none; padding:12px 25px;">取消</button>
+        </div>
+      `;
+      document.getElementById('resetBtn').addEventListener('click', startReset);
+      document.getElementById('cancelReset').addEventListener('click', ()=>{
+        audio.cancelDenySound();
+        alert("❌ 无法取消！只能恢复出厂设置。");
+        // 重新渲染设置页面，确保按钮仍然有效
+        openSettings();
+      });
+    }
+
+    function startReset() {
+      audio.glitchSound();
+      document.getElementById('app').innerHTML = `
+        <div class="screen" style="background:#1a0000; color:#f66; z-index:10;">
+          <h2>恢复出厂设置中...</h2>
+          <div class="progress-bar"><div id="resetFill" class="progress-fill" style="width:0%; background:#ff1a1a; box-shadow:0 0 15px red;"></div></div>
+          <p id="resetPercent" style="font-weight:bold;">0%</p>
+        </div>
+      `;
+      let prog = 0;
+      const fill = document.getElementById('resetFill');
+      const text = document.getElementById('resetPercent');
+      const intv = setInterval(()=>{
+        prog += 2.2;
+        if(prog>=100){
+          prog=100;
+          clearInterval(intv);
+          fill.style.width='100%';
+          text.innerText='100%';
+          stopCreepyCanvas();
+          setTimeout(()=>{
+            document.getElementById('app').innerHTML = `<div class="screen" style="background:black;"></div>`;
+            audio.playTone(30, 'square', 2.8, 0.5);
+            setTimeout(()=>{
+              showJumpscare('💀👹', 'BOSS 突脸！');
+              setTimeout(()=>{
+                document.getElementById('app').innerHTML = `<div class="screen" style="background:black;"></div>`;
+                setTimeout(()=>{
+                  document.getElementById('app').innerHTML = `
+                    <div class="screen" style="background:black; color:white; cursor:pointer; z-index:10;" id="restartTrigger">
+                      <h1 style="color:red; animation:pulse 0.5s infinite;">点击屏幕重新开始</h1>
+                      <p style="color:#888;">一切又将重演...</p>
+                    </div>
+                  `;
+                  document.getElementById('restartTrigger').addEventListener('click', ()=>{
+                    location.reload();
+                  });
+                }, 5000);
+              }, 2200);
+            }, 5000);
+          }, 600);
+        } else {
+          fill.style.width = prog+'%';
+          text.innerText = Math.floor(prog)+'%';
+        }
+      }, 70);
+    }
+
+    function showJumpscare(emoji, msg) {
+      const div = document.createElement('div');
+      div.className = 'scary-face';
+      div.innerHTML = `<span style="font-size:130px;">${emoji}</span><p style="color:red; font-size:28px; margin-top:20px;">${msg}</p>`;
+      document.body.appendChild(div);
+      audio.jumpScareSound();
+      setTimeout(()=> div.remove(), 1700);
+    }
+
+    // 启动应用
+    renderHome();
+  </script>
+</body>
+</html>
