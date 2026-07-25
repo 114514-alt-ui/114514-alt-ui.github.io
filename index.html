@@ -2,758 +2,595 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
-  <title>iOS 66.6.6 系统升级</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0, minimum-scale=0.5">
+  <title>科技风抽号系统 · 量子随机舱</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: black;
-      font-family: -apple-system, 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
+
+    body {
+      background: radial-gradient(circle at 30% 30%, #0b0f1c, #02040a);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Orbitron', 'Arial', sans-serif;
+      padding: 1.5rem;
+      margin: 0;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
-    .screen {
+
+    /* 科技网格背景 */
+    body::before {
+      content: "";
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transition: background 0.3s ease, opacity 0.2s ease;
-    }
-    /* 仿iOS主屏幕 - 蓝色背景 */
-    .ios-home {
-      background: linear-gradient(135deg, #1e3b5c 0%, #0f2027 50%, #1a2f3f 100%);
-      background-size: cover;
-      color: white;
-      position: relative;
-    }
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 30px;
-      width: 100%;
-      max-width: 400px;
-      margin-top: 40px;
-      justify-items: center;
-    }
-    .app-icon {
-      width: 65px;
-      height: 65px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    .app-icon:active {
-      transform: scale(0.95);
-    }
-    .app-label {
-      font-size: 11px;
-      margin-top: 6px;
-      text-align: center;
-      color: white;
-      text-shadow: 0 1px 3px black;
-    }
-    .status-bar {
-      width: 100%;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      background: rgba(0,0,0,0.2);
-    }
-    /* 弹窗 */
-    .alert-overlay {
-      position: fixed;
-      top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .alert-box {
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      width: 300px;
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      color: #111;
-    }
-    .alert-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    .alert-message {
-      font-size: 15px;
-      margin-bottom: 24px;
-      color: #333;
-    }
-    .btn-upgrade {
-      background: #007AFF;
-      color: white;
-      border: none;
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn-upgrade:active { background: #005bb5; }
-    .btn-cancel {
-      background: transparent;
-      color: #007AFF;
-      border: none;
-      width: 100%;
-      padding: 12px;
-      font-size: 17px;
-      font-weight: 500;
-      background: rgba(200,200,200,0.3);
-      border-radius: 12px;
-      cursor: pointer;
-    }
-    /* 升级界面 - 正常白色 */
-    .normal-upgrade {
-      background: #ffffff;
-      color: #1d1d1f;
-    }
-    .normal-progress {
-      background: #e0e0e0;
-    }
-    .normal-fill {
-      background: #007AFF;
-      box-shadow: 0 0 8px rgba(0,122,255,0.5);
-    }
-    /* 猩红恐怖界面 */
-    .crimson-bg {
-      background: #4a0b0b;
-      background-image: radial-gradient(circle at 20% 30%, #8b1a1a, #2c0000);
-      color: #fdd;
-    }
-    .glitch-text {
-      font-weight: 900;
-      text-shadow: 0 0 6px red, 0 0 12px darkred;
-      animation: pulse 0.8s infinite alternate;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.9; text-shadow: 0 0 8px red; }
-      100% { opacity: 1; text-shadow: 0 0 20px crimson, 0 0 30px darkred; }
-    }
-    .progress-bar {
-      width: 80%;
-      height: 14px;
-      border-radius: 10px;
-      margin: 20px auto;
-      overflow: hidden;
-      transition: background 0.5s ease;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      transition: width 0.1s linear, background 0.5s ease, box-shadow 0.5s ease;
-    }
-    .horror-app-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      padding: 20px;
-      width: 100%;
-      max-width: 400px;
-      margin-top: 30px;
-    }
-    .horror-icon {
-      background: rgba(20,0,0,0.7);
-      backdrop-filter: blur(5px);
-      border: 1px solid #5a0000;
-      color: #c44;
-      transition: 0.1s;
-    }
-    .horror-icon:active { background: #5a0000; }
-    .hidden {
-      display: none !important;
-    }
-    .creepy-bg {
-      background: #1f0000;
-      animation: creepyShift 0.4s infinite;
-    }
-    @keyframes creepyShift {
-      0% { background-color: #2f0404; }
-      25% { background-color: #3a0101; }
-      50% { background-color: #240000; }
-      75% { background-color: #410303; }
-      100% { background-color: #2a0000; }
-    }
-    .fake-video {
-      width: 100%;
-      background: black;
-      color: #f88;
-      padding: 20px;
-      text-align: center;
-      border: 1px solid red;
-    }
-    .video-player {
-      width: 100%;
-      background: #000;
-      padding: 15px;
-      border: 2px solid #b00;
-      margin: 10px 0;
-      position: relative;
-    }
-    .emoji-animation {
-      font-size: 50px;
-      animation: float 1.5s infinite;
-    }
-    @keyframes float {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0); }
-    }
-    button {
-      cursor: pointer;
-      border: none;
-    }
-    .scary-face {
-      position: fixed;
-      top:0; left:0; width:100%; height:100%;
-      background: black;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 120px;
-      z-index: 300;
-      animation: shake 0.2s infinite;
-    }
-    @keyframes shake {
-      0% { transform: translate(1px, 1px); }
-      25% { transform: translate(-2px, 0px); }
-      50% { transform: translate(2px, -1px); }
-      75% { transform: translate(-1px, 2px); }
-      100% { transform: translate(0px, -1px); }
-    }
-    canvas#bgCanvas {
-      position: fixed;
-      top:0; left:0;
-      width:100%;
-      height:100%;
-      z-index: -1;
-      opacity: 0.75;
-    }
-    .disabled-app {
-      opacity: 0.4;
-      filter: grayscale(0.8);
+      background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
       pointer-events: none;
+      z-index: 0;
     }
-    .welcome-hell {
-      font-size: 40px;
-      font-weight: 900;
-      color: #ff1a1a;
-      text-shadow: 0 0 30px red, 0 0 60px darkred;
-      animation: pulse 0.5s infinite;
+
+    /* 主卡片：全息科技容器 */
+    .container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 750px;
+      background: rgba(8, 18, 28, 0.7);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 60px rgba(0, 180, 255, 0.4), inset 0 0 30px rgba(0, 255, 200, 0.2);
+      border-radius: 3.5rem;
+      padding: 2rem 2rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s ease;
     }
-    /* 过渡动画 */
-    .transition-to-crimson {
-      animation: bgTransition 0.8s ease-in-out forwards;
+
+    /* 顶部标题区域 */
+    .title-section {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
-    @keyframes bgTransition {
-      0% { background: #ffffff; }
-      50% { background: #8b0000; }
-      100% { background: #2c0000; background-image: radial-gradient(circle at 20% 30%, #8b1a1a, #2c0000); }
+
+    .main-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 0.3rem;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #c0f0ff 0%, #4df0ff 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 15px #00e0ff);
+      margin-bottom: 0.2rem;
+      font-family: 'Orbitron', 'Segoe UI', sans-serif;
     }
-    .text-glitch {
-      animation: textFlicker 0.3s infinite;
+
+    .sub-title {
+      color: #8aa0b0;
+      font-size: 0.9rem;
+      letter-spacing: 0.2rem;
+      text-transform: uppercase;
+      border-top: 1px solid rgba(0, 255, 255, 0.4);
+      display: inline-block;
+      padding-top: 0.5rem;
+      margin-top: 0.2rem;
     }
-    @keyframes textFlicker {
-      0% { opacity: 1; transform: translate(0); }
-      25% { opacity: 0.8; transform: translate(-2px, 1px); }
-      50% { opacity: 1; transform: translate(2px, -1px); }
-      75% { opacity: 0.9; transform: translate(-1px, -1px); }
-      100% { opacity: 1; transform: translate(0); }
+
+    /* 动态大圆圈 - 核心展示区 */
+    .circle-frame {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 1.8rem 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .big-circle {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(0, 20, 40, 0.75);
+      backdrop-filter: blur(12px);
+      border: 3px solid rgba(0, 255, 255, 0.7);
+      box-shadow: 0 0 45px rgba(0, 180, 255, 0.8), inset 0 0 35px rgba(0, 255, 200, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 金色状态 */
+    .big-circle.golden {
+      background: radial-gradient(circle at 30% 30%, #ffd966, #b8860b);
+      border: 3px solid #ffbb2e;
+      box-shadow: 0 0 80px #ffaa00, inset 0 0 50px #ffcc66;
+      border-color: #ffcc66;
+    }
+
+    .circle-text {
+      font-size: 4.5rem;
+      font-weight: 800;
+      color: #e0f0ff;
+      text-shadow: 0 0 25px #00ffff, 0 0 10px #0077ff;
+      font-family: 'Orbitron', 'Segoe UI', sans-serif;
+      letter-spacing: 2px;
+      transition: color 0.2s;
+    }
+
+    .big-circle.golden .circle-text {
+      color: #1a1e2b;
+      text-shadow: 0 0 20px #ffdd88, 0 0 8px #ffffff;
+    }
+
+    /* 环绕科技光圈 */
+    .circle-frame::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      right: -12px;
+      bottom: -12px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #00ffff, #0055ff, #aa00ff, #00ffff);
+      opacity: 0.5;
+      filter: blur(18px);
+      z-index: 0;
+      animation: spinGlow 6s infinite linear;
+    }
+
+    @keyframes spinGlow {
+      0% { transform: rotate(0deg); opacity: 0.5; }
+      50% { opacity: 0.8; }
+      100% { transform: rotate(360deg); opacity: 0.5; }
+    }
+
+    /* 下方号码网格 (即将抽的号) */
+    .numbers-grid {
+      width: 100%;
+      background: rgba(0, 10, 20, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      border-radius: 2.5rem;
+      padding: 1.2rem 1rem;
+      margin: 1rem 0 1.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      min-height: 90px;
+    }
+
+    .number-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: rgba(20, 40, 60, 0.7);
+      backdrop-filter: blur(5px);
+      border: 1px solid #00ccff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #b0f0ff;
+      text-shadow: 0 0 10px #00a6ff;
+      box-shadow: 0 0 15px rgba(0, 160, 255, 0.5);
+      transition: all 0.2s ease;
+      position: relative;
+      background: linear-gradient(145deg, #102433, #05101c);
+    }
+
+    /* 已淘汰样式：灰色+左上角叉号 */
+    .number-badge.eliminated {
+      background: #1e2a32;
+      border-color: #4a5560;
+      color: #5f6b7a;
+      text-shadow: none;
+      box-shadow: 0 0 5px #2d3748;
+      position: relative;
+      opacity: 0.65;
+    }
+
+    .number-badge.eliminated::after {
+      content: "✕";
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      font-size: 1.2rem;
+      color: #ff5e7e;
+      font-weight: bold;
+      text-shadow: 0 0 8px black;
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* 控制按钮组 */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-top: 0.5rem;
+    }
+
+    .tech-btn {
+      background: rgba(0, 20, 40, 0.75);
+      backdrop-filter: blur(15px);
+      border: 1px solid #00e0ff;
+      color: #d0f0ff;
+      padding: 0.9rem 2rem;
+      border-radius: 3rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 0.15rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(0, 180, 255, 0.6);
+      transition: 0.25s;
+      background: linear-gradient(135deg, #0a1a2f, #021024);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .tech-btn:hover {
+      background: #0a2848;
+      box-shadow: 0 0 35px #00ffff;
+      border-color: #ffffff;
+      color: white;
+      transform: scale(1.02);
+    }
+
+    .tech-btn:active {
+      transform: scale(0.96);
+    }
+
+    .reset-btn {
+      border-color: #b0a0ff;
+      box-shadow: 0 0 18px #7a6aff;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 500px) {
+      .container {
+        padding: 1.5rem 1rem;
+      }
+      .number-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+      .big-circle {
+        width: 180px;
+        height: 180px;
+      }
+      .circle-text {
+        font-size: 3.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <canvas id="bgCanvas" style="display:none;"></canvas>
-  <div id="app"></div>
-  <script>
-    // ==================== 高级音频引擎 ====================
-    class HorrorAudio {
-      constructor() {
-        this.ctx = null;
-      }
-      getContext() {
-        if (!this.ctx) {
-          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        return this.ctx;
-      }
-      playTone(freq, type='sawtooth', duration=0.3, vol=0.1, delay=0) {
-        try {
-          const ctx = this.getContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = type;
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(vol, ctx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + delay);
-          osc.stop(ctx.currentTime + delay + duration);
-        } catch(e) {}
-      }
-      horrorSting() {
-        this.playTone(120, 'sawtooth', 0.6, 0.3);
-        setTimeout(()=> this.playTone(80, 'square', 0.8, 0.35), 150);
-        setTimeout(()=> this.playTone(40, 'triangle', 1.0, 0.25), 300);
-      }
-      intenseHorror() {
-        for(let i=0;i<8;i++) {
-          this.playTone(50+i*20, 'square', 0.15, 0.1, i*0.07);
-        }
-      }
-      glitchSound() {
-        for(let i=0;i<6;i++) {
-          this.playTone(30+Math.random()*220, 'square', 0.07, 0.07, i*0.05);
-        }
-      }
-      jumpScareSound() {
-        this.playTone(45, 'square', 1.0, 0.7);
-        this.playTone(28, 'sawtooth', 1.4, 0.6, 0.15);
-        this.playTone(65, 'triangle', 0.5, 0.5, 0.3);
-      }
-      ambientDrone() {
-        this.playTone(22, 'sine', 4, 0.1);
-      }
-      cancelDenySound() {
-        this.playTone(90, 'square', 0.25, 0.2);
-        this.playTone(45, 'sawtooth', 0.5, 0.3, 0.2);
-      }
-      transitionSound() {
-        this.playTone(60, 'sawtooth', 0.4, 0.15);
-        setTimeout(()=> this.playTone(40, 'square', 0.6, 0.2, 0.2), 200);
-        setTimeout(()=> this.playTone(30, 'triangle', 0.8, 0.25, 0.4), 400);
-      }
-    }
-    const audio = new HorrorAudio();
+<div class="container">
+  <div class="title-section">
+    <h1 class="main-title">CYBER DRAW</h1>
+    <div class="sub-title">量子抽取舱</div>
+  </div>
 
-    // ==================== Canvas 动态恐怖背景 ====================
-    function startCreepyCanvas() {
-      const canvas = document.getElementById('bgCanvas');
-      canvas.style.display = 'block';
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  <!-- 动态大圆圈 -->
+  <div class="circle-frame">
+    <div class="big-circle" id="bigCircle">
+      <span class="circle-text" id="circleDisplay">?</span>
+    </div>
+  </div>
+
+  <!-- 下方号码池 (即将抽的号) -->
+  <div class="numbers-grid" id="numbersGrid"></div>
+
+  <!-- 操作按钮 -->
+  <div class="action-buttons">
+    <button class="tech-btn" id="drawBtn">▶ 抽号</button>
+    <button class="tech-btn reset-btn" id="resetBtn">↺ 重新抽号</button>
+  </div>
+  <div style="margin-top: 0.8rem; color: #4f6b7a; font-size: 0.7rem; letter-spacing: 0.1rem;">
+    [ 代码内可修改标签 ]
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---------- ★ 可在代码内修改的配置区域 ★ ----------
+    // 默认40个数字，你可以改成任意字符串数组，如 ['苹果','香蕉','橘子'...] 或者混合。
+    // 数量自动适应，通过复制增加元素即可。目前默认1~40。
+    const DEFAULT_ITEMS = Array.from({ length: 40 }, (_, i) => (i + 1).toString());
+    
+    // 如果你希望改成文字标签，取消下面注释并修改数组：
+    // const DEFAULT_ITEMS = ['阿尔法', '贝塔', '伽马', '德尔塔', '厄普西隆', ...]; 
+    // 也可以混合: ['01', '02', 'A', 'B', '红', '蓝'] 等。
+    // ------------------------------------------------
+
+    // 状态变量
+    let items = [];                 // 当前所有项目 (字符串)
+    let availableIndices = [];     // 剩余可抽索引 (数字)
+    let eliminatedIndices = new Set(); // 已淘汰索引
+    
+    // DOM 元素
+    const bigCircleEl = document.getElementById('bigCircle');
+    const circleDisplayEl = document.getElementById('circleDisplay');
+    const numbersGridEl = document.getElementById('numbersGrid');
+    const drawBtn = document.getElementById('drawBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // 动画相关
+    let rollingInterval = null;
+    let isRolling = false;
+    let currentRollingItem = '?';
+
+    // ---------- 工具函数 ----------
+    function initializeSystem() {
+      // 深拷贝默认配置
+      items = [...DEFAULT_ITEMS];
+      // 重置状态
+      availableIndices = items.map((_, idx) => idx);
+      eliminatedIndices.clear();
       
-      function draw() {
-        if (canvas.style.display === 'none') return;
-        ctx.fillStyle = `rgba(${10+Math.random()*20}, 0, 0, 0.2)`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        for(let i=0;i<20;i++) {
-          ctx.fillStyle = `rgba(90,0,0,${Math.random()*0.4})`;
-          ctx.beginPath();
-          ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*50+5, 0, Math.PI*2);
-          ctx.fill();
-        }
-        requestAnimationFrame(draw);
-      }
-      draw();
-    }
-    function stopCreepyCanvas() {
-      document.getElementById('bgCanvas').style.display = 'none';
-    }
-
-    // ==================== 应用状态管理 ====================
-    let appUsage = {
-      files: false,
-      browser: false,
-      settings: false
-    };
-
-    function resetAppUsage() {
-      appUsage = { files: false, browser: false, settings: false };
-    }
-
-    // ==================== 界面渲染 ====================
-    function renderHome() {
-      stopCreepyCanvas();
-      resetAppUsage();
-      document.getElementById('app').innerHTML = `
-        <div class="screen ios-home" id="homeScreen">
-          <div class="status-bar"><span>9:41</span><span>📶 🔋 91%</span></div>
-          <div style="font-size:28px; font-weight:300; margin-top:60px;">iOS 66</div>
-          <div class="app-grid">
-            ${['📁','📷','📅','📌','🗂️','🎵','⚙️','📊','📝','⏰','🌐','📞'].map(icon => 
-              `<div><div class="app-icon">${icon}</div><div class="app-label">App</div></div>`).join('')}
-          </div>
-          <div style="margin-top:40px; color:white; opacity:0.8;">iPhone 15 Pro</div>
-        </div>
-        <div id="updateAlertContainer"></div>
-      `;
-
-      // 10秒后显示升级弹窗（白色背景）
-      setTimeout(() => {
-        const container = document.getElementById('updateAlertContainer');
-        if (container) {
-          container.innerHTML = `
-            <div class="alert-overlay" style="background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);">
-              <div class="alert-box" style="background: white; border: 1px solid #e0e0e0;">
-                <div class="alert-title" style="color: #1d1d1f;">⚡ iOS 66.6.6</div>
-                <div class="alert-message" style="color: #555;">必须立即更新至最新系统。<br>取消可能导致设备不稳定。</div>
-                <button class="btn-upgrade" id="upgradeBtn" style="background: #007AFF; color: white;">立即升级</button>
-                <button class="btn-cancel" id="cancelBtn" style="color: #007AFF; background: rgba(0,122,255,0.08);">取消</button>
-              </div>
-            </div>
-          `;
-          
-          document.getElementById('cancelBtn').addEventListener('click', cancelToCrimson);
-          document.getElementById('upgradeBtn').addEventListener('click', startUpgrade);
-          
-          // 微弱的提示音
-          audio.playTone(880, 'sine', 0.2, 0.1);
-        }
-      }, 10000);
-    }
-
-    function cancelToCrimson() {
-      audio.horrorSting();
-      document.getElementById('app').innerHTML = `
-        <div class="screen crimson-bg" style="justify-content:center; padding:20px;">
-          <h1 class="glitch-text" style="font-size:32px;">⚠️ 无法退出</h1>
-          <p style="color:#f88; margin:20px; text-align:center; font-size:18px;">你已经被锁定。<br>只有升级才能继续。</p>
-          <p style="color:#a00; margin:10px;">"无法退出" "没有回头路" "你属于这里"</p>
-          <button class="btn-upgrade" id="forceUpgrade" style="background:#8b0000; margin-top:30px; box-shadow:0 0 20px red;">⚡ 升级 iOS 66.6.6</button>
-        </div>
-      `;
-      document.getElementById('forceUpgrade').addEventListener('click', startUpgrade);
-    }
-
-    function startUpgrade() {
-      audio.glitchSound();
-      // 初始正常白色升级界面
-      document.getElementById('app').innerHTML = `
-        <div class="screen normal-upgrade" id="upgradeScreen" style="justify-content:center;">
-          <h2 id="upgradeTitle" style="color:#1d1d1f;">正在升级 iOS 66.6.6</h2>
-          <div class="progress-bar normal-progress" id="progressBar">
-            <div id="progressFill" class="progress-fill normal-fill" style="width:0%"></div>
-          </div>
-          <p id="percentText" style="color:#1d1d1f; font-weight:bold;">0%</p>
-          <p id="statusText" style="color:#666; margin-top:20px;">正在验证更新...</p>
-        </div>
-      `;
+      // 清除任何进行中的动画
+      stopRolling();
+      // 重置大圆圈样式 (移除金色)
+      bigCircleEl.classList.remove('golden');
+      circleDisplayEl.textContent = '?';
       
-      let progress = 0;
-      let hasTransitioned = false;
-      const fill = document.getElementById('progressFill');
-      const text = document.getElementById('percentText');
-      const statusText = document.getElementById('statusText');
-      const title = document.getElementById('upgradeTitle');
-      const progressBar = document.getElementById('progressBar');
-      const screen = document.getElementById('upgradeScreen');
+      // 重新渲染网格
+      renderGrid();
+    }
+
+    // 渲染下方号码网格
+    function renderGrid() {
+      numbersGridEl.innerHTML = '';
       
-      const interval = setInterval(() => {
-        progress += Math.random() * 3 + 1.5;
-        
-        // 在66%时触发过渡效果
-        if (progress >= 66 && !hasTransitioned) {
-          hasTransitioned = true;
-          audio.transitionSound();
-          
-          // 添加过渡动画类
-          screen.classList.add('transition-to-crimson');
-          title.classList.add('text-glitch');
-          
-          // 改变文字内容
-          title.innerHTML = '⚠️ 系统异常';
-          title.style.color = '#f44';
-          title.style.textShadow = '0 0 10px red';
-          statusText.innerHTML = '检测到恶意软件...';
-          statusText.style.color = '#f88';
-          text.style.color = '#faa';
-          
-          // 改变进度条样式
-          progressBar.className = 'progress-bar';
-          progressBar.style.background = '#222';
-          fill.className = 'progress-fill';
-          fill.style.background = '#ff1a1a';
-          fill.style.boxShadow = '0 0 20px red';
-          
-          // 播放强烈音效
-          setTimeout(() => {
-            audio.intenseHorror();
-          }, 400);
-          
-          // 添加屏幕震动效果
-          screen.style.animation = 'shake 0.1s infinite';
+      items.forEach((item, index) => {
+        const badge = document.createElement('div');
+        badge.className = 'number-badge';
+        if (eliminatedIndices.has(index)) {
+          badge.classList.add('eliminated');
         }
-        
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          fill.style.width = '100%';
-          text.innerText = '100%';
-          statusText.innerHTML = '升级完成...';
-          screen.style.animation = 'none';
-          setTimeout(showWelcomeHell, 1000);
-        } else {
-          fill.style.width = progress + '%';
-          text.innerText = Math.floor(progress) + '%';
-        }
-      }, 100);
-    }
-
-    function showWelcomeHell() {
-      audio.horrorSting();
-      document.getElementById('app').innerHTML = `
-        <div class="screen crimson-bg" style="justify-content:center; text-align:center;">
-          <div class="welcome-hell">👹 欢迎来到地狱 👹</div>
-          <p style="color:#f88; margin-top:20px; font-size:20px;">iOS 66.6.6 已安装</p>
-          <div style="font-size:60px; margin:20px 0;">
-            <span class="emoji-animation">💀</span>
-            <span class="emoji-animation" style="animation-delay:0.3s;">🔥</span>
-            <span class="emoji-animation" style="animation-delay:0.6s;">👁️</span>
-          </div>
-          <button id="enterHorror" style="background:#b00; color:white; padding:16px 40px; font-size:22px; border-radius:14px; margin-top:30px; box-shadow:0 0 30px red;">进入系统</button>
-        </div>
-      `;
-      document.getElementById('enterHorror').addEventListener('click', showHorrorSystem);
-    }
-
-    function showHorrorSystem() {
-      startCreepyCanvas();
-      audio.ambientDrone();
-      document.getElementById('app').innerHTML = `
-        <div class="screen" id="horrorMain" style="justify-content:flex-start; padding-top:50px; background:transparent;">
-          <div style="color:#f44; font-size:26px; text-shadow:0 0 15px red; z-index:10;">iOS 66.6.6</div>
-          <div class="horror-app-grid" id="horrorApps" style="z-index:10;">
-            ${renderHorrorIcons()}
-          </div>
-          <p style="color:#a00; margin-top:30px; z-index:10;">⚠️ 系统极不稳定</p>
-        </div>
-      `;
-      bindHorrorApps();
-    }
-
-    function renderHorrorIcons() {
-      const apps = [
-        {icon:'📁', name:'文件', action:'files', used: appUsage.files},
-        {icon:'🌐', name:'浏览器', action:'browser', used: appUsage.browser},
-        {icon:'⚙️', name:'设置', action:'settings', used: appUsage.settings},
-        {icon:'💀', name:'死亡', action:null, used:false},
-        {icon:'🩸', name:'血', action:null, used:false},
-        {icon:'👁️', name:'注视', action:null, used:false},
-        {icon:'🕳️', name:'深渊', action:null, used:false},
-        {icon:'🪓', name:'斩', action:null, used:false},
-        {icon:'📵', name:'无信号', action:null, used:false},
-        {icon:'🧟', name:'死者', action:null, used:false},
-        {icon:'🔪', name:'刃', action:null, used:false},
-        {icon:'☠️', name:'毒', action:null, used:false}
-      ];
-      return apps.map(a => {
-        let classes = '';
-        if(a.action && a.used) classes = 'disabled-app';
-        if(a.action) classes += ' usable-app';
-        return `<div class="${classes}" data-action="${a.action || ''}" style="text-align:center;">
-          <div class="app-icon horror-icon">${a.icon}</div>
-          <div class="app-label" style="color:#c44;">${a.name}</div>
-        </div>`;
-      }).join('');
-    }
-
-    function bindHorrorApps() {
-      document.querySelectorAll('.usable-app').forEach(el => {
-        el.addEventListener('click', (e) => {
-          const action = el.dataset.action;
-          if(el.classList.contains('disabled-app')) return;
-          if(action === 'files' && !appUsage.files) {
-            appUsage.files = true;
-            openFiles();
-          } else if(action === 'browser' && !appUsage.browser) {
-            appUsage.browser = true;
-            openBrowser();
-          } else if(action === 'settings' && !appUsage.settings) {
-            appUsage.settings = true;
-            openSettings();
-          }
-        });
+        badge.textContent = item;
+        badge.setAttribute('data-index', index);
+        numbersGridEl.appendChild(badge);
       });
     }
 
-    function openFiles() {
-      audio.glitchSound();
-      document.getElementById('app').innerHTML = `
-        <div class="screen" style="background:#110000; color:#faa; padding:20px; z-index:10;">
-          <h2 style="color:red;">📁 文件</h2>
-          <div class="fake-video" style="margin-top:30px;">
-            <p>📹 设备最后影像.mp4</p>
-            <div class="video-player" id="videoPlayer">
-              <div style="display:flex; align-items:center; justify-content:center; gap:15px; flex-wrap:wrap;">
-                <span class="emoji-animation">📱</span>
-                <span class="emoji-animation" style="animation-delay:0.3s;">💥</span>
-                <span class="emoji-animation" style="animation-delay:0.6s;">🔥</span>
-              </div>
-              <p style="color:#f44; margin-top:15px;">⚠️ 正在播放：屏幕碎裂，冒烟...</p>
-            </div>
-            <button id="playVideoBtn" style="background:#b00; color:white; padding:12px; border:none; border-radius:8px; width:100%; margin-top:10px;">▶ 播放视频</button>
-          </div>
-          <button id="backFromFiles" style="margin-top:25px; background:#333; color:white; border:none; padding:12px; width:100%;">返回主屏幕</button>
-        </div>
-      `;
-      document.getElementById('playVideoBtn').addEventListener('click', ()=>{
-        const player = document.getElementById('videoPlayer');
-        player.innerHTML = `
-          <div style="font-size:60px; animation: float 0.5s infinite;">📱💥🔥</div>
-          <p style="color:#f44; margin-top:10px;">视频内容：手机屏幕出现裂痕，冒烟，最后黑屏尖叫...</p>
-          <p style="color:#f88;">😱 上一个用户尝试逃离，设备永久损坏。</p>
-        `;
-        audio.playTone(50, 'sawtooth', 2.0, 0.5);
-      });
-      document.getElementById('backFromFiles').addEventListener('click', showHorrorSystem);
+    // 更新可用索引 (基于eliminatedIndices)
+    function updateAvailableIndices() {
+      availableIndices = items.reduce((arr, _, idx) => {
+        if (!eliminatedIndices.has(idx)) {
+          arr.push(idx);
+        }
+        return arr;
+      }, []);
     }
 
-    function openBrowser() {
-      audio.horrorSting();
-      document.getElementById('app').innerHTML = `
-        <div class="screen" style="background:#000; color:#f66; padding:10px; z-index:10;">
-          <div style="display:flex; justify-content:space-between; width:100%; padding:5px;">
-            <span>🌐 深渊浏览器</span>
-            <button id="closeBrowser" style="background:red; color:white; border:none; padding:5px 15px;">X</button>
-          </div>
-          <div id="browserContent" style="margin-top:20px; height:75%; overflow-y:auto; background:#111; padding:10px; border:1px solid #400;">
-            <p style="color:#f44;">⚠️ 正在加载页面...</p>
-          </div>
-        </div>
-      `;
-      const sites = ['你无法逃脱.com', '死亡倒计时.net', '深渊凝视.org', '666.hell', '诅咒页面'];
-      let popupCount = 0;
-      const contentDiv = document.getElementById('browserContent');
-      function addPopup() {
-        if(popupCount > 7) {
-          showJumpscare('👹', '恐怖怪物突脸！');
-          setTimeout(()=> showHorrorSystem(), 2000);
+    // 停止滚动动画
+    function stopRolling() {
+      if (rollingInterval) {
+        clearInterval(rollingInterval);
+        rollingInterval = null;
+      }
+      isRolling = false;
+    }
+
+    // 从可用池中随机获取一个项目字符串
+    function getRandomAvailableItem() {
+      if (availableIndices.length === 0) return null;
+      const randomPos = Math.floor(Math.random() * availableIndices.length);
+      const idx = availableIndices[randomPos];
+      return { index: idx, value: items[idx] };
+    }
+
+    // 开始在大圆圈中快速变换数字
+    function startRolling() {
+      if (isRolling) return;
+      // 如果没有可抽号码，不能滚动
+      if (availableIndices.length === 0) {
+        alert('所有号码均已抽完，请重新抽号重置。');
+        return;
+      }
+      
+      stopRolling(); // 确保之前清理
+      isRolling = true;
+      
+      // 移除金色状态 (滚动时恢复科技蓝)
+      bigCircleEl.classList.remove('golden');
+      
+      rollingInterval = setInterval(() => {
+        if (availableIndices.length === 0) {
+          // 如果滚动中途没号了，停止并显示?
+          stopRolling();
+          circleDisplayEl.textContent = '!';
+          bigCircleEl.classList.add('golden'); // 也可以提示结束
           return;
         }
-        const site = sites[popupCount % sites.length];
-        contentDiv.innerHTML += `<p style="color:#f44; border:1px solid red; padding:8px; margin:5px; background:#1a0000;">🔴 ${site} - 警告：你无法离开</p>`;
-        popupCount++;
-        audio.playTone(100+popupCount*20, 'square', 0.12, 0.06);
-        setTimeout(addPopup, 350);
-      }
-      addPopup();
-      document.getElementById('closeBrowser').addEventListener('click', ()=>{
-        showJumpscare('👹', '无法关闭！');
-        setTimeout(()=> showHorrorSystem(), 1800);
-      });
-    }
-
-    function openSettings() {
-      document.getElementById('app').innerHTML = `
-        <div class="screen reset-screen" style="padding:20px; z-index:10; justify-content:center;">
-          <h2 style="color:#f44;">⚙️ 设置</h2>
-          <div style="margin-top:50px; text-align:center;">
-            <button id="resetBtn" style="background:#b00; color:white; padding:18px 35px; border:none; font-size:20px; border-radius:14px; box-shadow:0 0 25px red;">恢复出厂设置</button>
-            <p style="color:#a00; margin-top:25px;">⚠️ 唯一可用的选项</p>
-          </div>
-          <button id="cancelReset" style="margin-top:30px; background:#333; color:white; border:none; padding:12px 25px;">取消</button>
-        </div>
-      `;
-      document.getElementById('resetBtn').addEventListener('click', startReset);
-      document.getElementById('cancelReset').addEventListener('click', ()=>{
-        audio.cancelDenySound();
-        alert("❌ 无法取消！只能恢复出厂设置。");
-        // 重新渲染设置页面，确保按钮仍然有效
-        openSettings();
-      });
-    }
-
-    function startReset() {
-      audio.glitchSound();
-      document.getElementById('app').innerHTML = `
-        <div class="screen" style="background:#1a0000; color:#f66; z-index:10;">
-          <h2>恢复出厂设置中...</h2>
-          <div class="progress-bar"><div id="resetFill" class="progress-fill" style="width:0%; background:#ff1a1a; box-shadow:0 0 15px red;"></div></div>
-          <p id="resetPercent" style="font-weight:bold;">0%</p>
-        </div>
-      `;
-      let prog = 0;
-      const fill = document.getElementById('resetFill');
-      const text = document.getElementById('resetPercent');
-      const intv = setInterval(()=>{
-        prog += 2.2;
-        if(prog>=100){
-          prog=100;
-          clearInterval(intv);
-          fill.style.width='100%';
-          text.innerText='100%';
-          stopCreepyCanvas();
-          setTimeout(()=>{
-            document.getElementById('app').innerHTML = `<div class="screen" style="background:black;"></div>`;
-            audio.playTone(30, 'square', 2.8, 0.5);
-            setTimeout(()=>{
-              showJumpscare('💀👹', 'BOSS 突脸！');
-              setTimeout(()=>{
-                document.getElementById('app').innerHTML = `<div class="screen" style="background:black;"></div>`;
-                setTimeout(()=>{
-                  document.getElementById('app').innerHTML = `
-                    <div class="screen" style="background:black; color:white; cursor:pointer; z-index:10;" id="restartTrigger">
-                      <h1 style="color:red; animation:pulse 0.5s infinite;">点击屏幕重新开始</h1>
-                      <p style="color:#888;">一切又将重演...</p>
-                    </div>
-                  `;
-                  document.getElementById('restartTrigger').addEventListener('click', ()=>{
-                    location.reload();
-                  });
-                }, 5000);
-              }, 2200);
-            }, 5000);
-          }, 600);
+        const randItem = getRandomAvailableItem();
+        if (randItem) {
+          circleDisplayEl.textContent = randItem.value;
+          currentRollingItem = randItem.value;
         } else {
-          fill.style.width = prog+'%';
-          text.innerText = Math.floor(prog)+'%';
+          circleDisplayEl.textContent = '?';
         }
-      }, 70);
+      }, 60); // 快速变化
     }
 
-    function showJumpscare(emoji, msg) {
-      const div = document.createElement('div');
-      div.className = 'scary-face';
-      div.innerHTML = `<span style="font-size:130px;">${emoji}</span><p style="color:red; font-size:28px; margin-top:20px;">${msg}</p>`;
-      document.body.appendChild(div);
-      audio.jumpScareSound();
-      setTimeout(()=> div.remove(), 1700);
+    // 执行抽号：停止滚动并确定结果
+    function performDraw() {
+      if (!isRolling) {
+        // 如果没在滚动，先尝试开始滚动 (用户可能直接点击抽号)
+        if (availableIndices.length === 0) {
+          alert('没有剩余号码可抽，请重置。');
+          return;
+        }
+        // 自动开始滚动然后立即抽取？设计为：点击抽号如果未滚动，启动滚动一小段时间再停。
+        startRolling();
+        // 设定短暂延迟后停止并锁定结果
+        setTimeout(() => {
+          lockDrawResult();
+        }, 800);
+        return;
+      }
+      
+      // 已经在滚动中：直接锁定结果
+      lockDrawResult();
     }
 
-    // 启动应用
-    renderHome();
-  </script>
+    // 锁定抽号结果：停止滚动，确定当前显示项(或随机选一个可用)，标记淘汰
+    function lockDrawResult() {
+      if (!isRolling && availableIndices.length === 0) {
+        return;
+      }
+      
+      stopRolling();
+      
+      // 安全检查：没有可抽号码
+      if (availableIndices.length === 0) {
+        circleDisplayEl.textContent = '×';
+        bigCircleEl.classList.add('golden');
+        renderGrid();
+        return;
+      }
+      
+      // 获取当前大圆圈显示的值对应的索引 (可能对应多个相同值？取第一个未淘汰的)
+      let targetIndex = -1;
+      const displayValue = circleDisplayEl.textContent;
+      
+      // 尝试从可用池中找到匹配当前显示值的索引
+      for (let idx of availableIndices) {
+        if (items[idx] === displayValue) {
+          targetIndex = idx;
+          break;
+        }
+      }
+      
+      // 如果找不到匹配(例如显示?或异常)，随机选一个可用
+      if (targetIndex === -1) {
+        const randomPick = getRandomAvailableItem();
+        if (randomPick) {
+          targetIndex = randomPick.index;
+          circleDisplayEl.textContent = randomPick.value;
+        } else {
+          return; // 无号码
+        }
+      }
+      
+      // 标记为淘汰
+      eliminatedIndices.add(targetIndex);
+      updateAvailableIndices();
+      
+      // 大圆圈变成金色，显示抽中号码
+      bigCircleEl.classList.add('golden');
+      // 确保显示抽中的值
+      circleDisplayEl.textContent = items[targetIndex];
+      
+      // 更新网格UI
+      renderGrid();
+      
+      // 如果所有号码抽完，可以额外提示
+      if (availableIndices.length === 0) {
+        console.log('所有号码已抽取完毕');
+      }
+    }
+
+    // 重置整个系统 (重新抽号)
+    function resetSystem() {
+      stopRolling();
+      // 重新初始化
+      items = [...DEFAULT_ITEMS];
+      availableIndices = items.map((_, idx) => idx);
+      eliminatedIndices.clear();
+      
+      bigCircleEl.classList.remove('golden');
+      circleDisplayEl.textContent = '?';
+      renderGrid();
+    }
+
+    // 事件绑定
+    drawBtn.addEventListener('click', () => {
+      // 如果所有号已淘汰，提示
+      if (availableIndices.length === 0) {
+        alert('所有号码已抽完，请点击“重新抽号”开始新的一轮。');
+        return;
+      }
+      
+      if (isRolling) {
+        // 正在滚动：执行锁定抽号
+        performDraw();
+      } else {
+        // 未滚动：开始滚动 (滚动过程中再点击抽号会锁定)
+        startRolling();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetSystem();
+    });
+
+    // 额外：如果点击抽号时未滚动，许多用户期望直接出结果。我们可以让“抽号”按钮在静止时启动滚动，然后再次点击锁定。
+    // 同时提供说明：也可以连续点击抽号触发锁定。
+    // 为了更好体验，增加一个监听：如果用户在滚动时再次点击抽号，就锁定。
+    // 已经在drawBtn中处理。
+
+    // 初始化调用
+    initializeSystem();
+
+    // 可选：如果用户通过代码修改了DEFAULT_ITEMS，重新加载页面即可生效。
+    // 暴露配置到全局方便控制台调试 (非必须)
+    window.luckyDrawConfig = {
+      getItems: () => items,
+      reset: resetSystem,
+      setItems: (newItems) => {
+        // 动态修改默认项并重置
+        if (Array.isArray(newItems) && newItems.length > 0) {
+          // 由于DEFAULT_ITEMS是const，这里使用可变方式：重新赋值items并重置
+          items = [...newItems];
+          availableIndices = items.map((_, i) => i);
+          eliminatedIndices.clear();
+          stopRolling();
+          bigCircleEl.classList.remove('golden');
+          circleDisplayEl.textContent = '?';
+          renderGrid();
+          // 同时尝试修改原始引用（但const限制，建议刷新）
+          console.log('已动态更新号码池，如需永久修改请编辑代码内DEFAULT_ITEMS。');
+        }
+      }
+    };
+
+  })();
+</script>
 </body>
 </html>
